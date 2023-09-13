@@ -1,0 +1,7 @@
+.idea/
+logs/
+.venv
+.DS_Store
+tests/
+target/
+.pytest_cache
