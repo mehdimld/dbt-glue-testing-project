@@ -5,3 +5,4 @@ logs/
 tests/
 target/
 .pytest_cache
+config/profiles.yml

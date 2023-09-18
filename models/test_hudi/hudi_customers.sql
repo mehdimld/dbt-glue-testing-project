@@ -1,15 +1,8 @@
 {{ config(
     materialized='incremental',
-    incremental_strategy='insert_overwrite',
-    unique_key=["customer_id"],
-    file_format='iceberg',
-    partition_by=['dt'], 
-    table_properties={'write.target-file-size-bytes': '268435456'}, 
-    lf_tags_config={
-          'enabled': true,
-          'tags': {
-            'group': 'developer'          }
-          }
+    incremental_strategy='merge',
+    unique_key="customer_id",
+    file_format='hudi'
 ) }}
 
 with customers as (

@@ -1,13 +1,5 @@
 {{ config(
-    materialized='incremental',
-    incremental_strategy='merge',
-    unique_key="customer_id",
-    file_format='hudi',
-    lf_tags_config={
-          'enabled': true,
-          'tags': {
-            'group': 'developer'          }
-          }
+    materialized='view'
 ) }}
 
 with customers as (

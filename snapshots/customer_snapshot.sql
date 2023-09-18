@@ -3,7 +3,7 @@
 {{
     config(
         strategy='timestamp',
-        target_schema='dbt_output_new',
+        target_schema='jaffle_shop_schema',
         unique_key='customer_id',
         updated_at='dt',
         file_format='iceberg'

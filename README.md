@@ -1,34 +1,19 @@
 # dbt-glue-testing
 
 ### pre-requisites : 
-
-- use the following template as dbt profile. And fill it with your own bucket, roles, ..
-```
-jaffle_shop:
-  target: dev
-  outputs:
-    dev:
-      type: glue
-      query-comment: my comment
-      role_arn: arn:aws:iam::<your_account_id>:role/AWSGlueServiceRole-dbt
-      region: <your_aws_region>
-      workers: 2
-      worker_type: G.1X
-      schema: "<your_schema_name>"
-      session_provisioning_timeout_in_seconds: 120
-      location: "s3://<your_s3_bucket_uri>"
-      datalake_formats: iceberg #Could be hudi or delta
-      conf: spark.sql.catalog.glue_catalog=org.apache.iceberg.spark.SparkCatalog  --conf spark.sql.catalog.glue_catalog.warehouse=s3://<your_s3_bucket_uri> --conf spark.sql.catalog.glue_catalog.catalog-impl=org.apache.iceberg.aws.glue.GlueCatalog --conf spark.sql.catalog.glue_catalog.io-impl=org.apache.iceberg.aws.s3.S3FileIO --conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions 
-```
-- create an s3 bucket named <demo-dbt-output-YOUR_AWS_ACCOUNT_ID> and replace it in your dbt-profile (location and configuration >> --conf spark.sql.warehouse.dir=<bucket-name>/<schema> fields)
-- use the following policy and attach it to a role named `AWSGlueServiceRole-dbt` that is the one mentionned in the profiles. 
+- Create an s3 bucket and replace it in your dbt-profile (location)
+- Choose your table format if you want to use one. You can either use Parquet (default one), Iceberg, Hudi or Delta. If you want to use Iceberg, Hudi or Delta, just modify the datalake_formats field in your config by specifying iceberg, hudi or delta. Further configuration can be required : see this link [for Iceberg, this link for Delta, this link for Hudi](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-datalake-native-frameworks.html). For simplicity purpose, we have provided 4 profiles files in the profiles.yaml file in the config directory of this repo, one for each table format. If you wan to select one, just change the profile key value in the dbt-project.yaml file.  
+- Create the Lake Formation tags if you want to test this feature
+- Create an inline IAM policy with the following template 
+- Create an IAM role named `AWSGlueServiceRole-dbt` that is the one mentionned in the profiles. 
+- Attach the policy you've created to this role.
 
 ```yaml
 {
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "Read_and_write_databases",
+            "Sid": "ReadAndWriteDatabases",
             "Action": [
                 "glue:SearchTables",
                 "glue:BatchCreatePartition",
@@ -58,7 +43,7 @@ jaffle_shop:
                 "glue:GetUserDefinedFunctions",
                 "lakeformation:ListResources",
                 "lakeformation:BatchGrantPermissions",
-                "lakeformation:ListPermissions", 
+                "lakeformation:ListPermissions",
                 "lakeformation:GetDataAccess",
                 "lakeformation:GrantPermissions",
                 "lakeformation:RevokePermissions",
@@ -67,17 +52,17 @@ jaffle_shop:
                 "lakeformation:RemoveLFTagsFromResource",
                 "lakeformation:GetResourceLFTags",
                 "lakeformation:ListLFTags",
-                "lakeformation:GetLFTag",
+                "lakeformation:GetLFTag"
             ],
             "Resource": [
-                "arn:aws:glue:<region>:<AWS Account>:catalog",
-                "arn:aws:glue:<region>:<AWS Account>:table/<dbt output database>/*",
-                "arn:aws:glue:<region>:<AWS Account>:database/<dbt output database>"
+                "arn:aws:glue:eu-west-1:919960130949:catalog",
+                "arn:aws:glue:eu-west-1:919960130949:table/jaffle_shop_schema/*",
+                "arn:aws:glue:eu-west-1:919960130949:database/jaffle_shop_schema"
             ],
             "Effect": "Allow"
         },
         {
-            "Sid": "Read_only_databases",
+            "Sid": "ReadOnlyDatabases",
             "Action": [
                 "glue:SearchTables",
                 "glue:GetTableVersions",
@@ -92,27 +77,27 @@ jaffle_shop:
                 "lakeformation:ListPermissions"
             ],
             "Resource": [
-                "arn:aws:glue:<region>:<AWS Account>:table/<dbt source database>/*",
-                "arn:aws:glue:<region>:<AWS Account>:database/<dbt source database>",
-                "arn:aws:glue:<region>:<AWS Account>:database/default",
-                "arn:aws:glue:<region>:<AWS Account>:database/global_temp"
+                "arn:aws:glue:eu-west-1:919960130949:table/jaffle_shop_schema/*",
+                "arn:aws:glue:eu-west-1:919960130949:database/jaffle_shop_schema",
+                "arn:aws:glue:eu-west-1:919960130949:database/default",
+                "arn:aws:glue:eu-west-1:919960130949:database/global_temp"
             ],
             "Effect": "Allow"
         },
         {
-            "Sid": "Storage_all_buckets",
+            "Sid": "StorageAllBuckets",
             "Action": [
                 "s3:GetBucketLocation",
                 "s3:ListBucket"
             ],
             "Resource": [
-                "arn:aws:s3:::<dbt output bucket>",
-                "arn:aws:s3:::<dbt source bucket>"
+                "arn:aws:s3:::<YOUR_S3_BUCKET>",
+                "arn:aws:s3:::<YOUR_S3_BUCKET>/*"
             ],
             "Effect": "Allow"
         },
         {
-            "Sid": "Read_and_write_buckets",
+            "Sid": "ReadAndWriteBuckets",
             "Action": [
                 "s3:PutObject",
                 "s3:PutObjectAcl",
@@ -120,17 +105,8 @@ jaffle_shop:
                 "s3:DeleteObject"
             ],
             "Resource": [
-                "arn:aws:s3:::<dbt output bucket>"
-            ],
-            "Effect": "Allow"
-        },
-        {
-            "Sid": "Read_only_buckets",
-            "Action": [
-                "s3:GetObject"
-            ],
-            "Resource": [
-                "arn:aws:s3:::<dbt source bucket>"
+                "arn:aws:s3:::<YOUR_S3_BUCKET>",
+                "arn:aws:s3:::<YOUR_S3_BUCKET>/*"
             ],
             "Effect": "Allow"
         }
@@ -141,9 +117,16 @@ jaffle_shop:
 
 ```
 python3 venv .venv
-pip install dbt-glue
 source .venv/bin/activate
-dbt seed
-dbt run --select staging
-dbt run --select customers
-``` 
+pip install dbt-glue
+dbt seed --profiles-dir ./config/
+dbt run --select staging --profiles-dir ./config/
+```
+- Depending on the file format you choose, you can run either test classic_materization (ie. parquet), test_delta, test_hudi, test_iceberg (and modify your profile name in dbt-project.yml in consequence). You then can run the following commands : 
+`dbt run --select test_<YOUR_TABLE_FORMAT>`
+- If you want to run the test_lf_tags model, you'll need to create Lake Formation tag in your AWS Account : 
+  - Login into the AWS Console with a principal that is Datalake Admin. 
+  - Go to Permissions > LF-Tags and permissions
+  - Click on 'Add LF-Tag' and complete the form with `sensitive` as key and `yes` and `no` as values.
+  - Now you're able to run `dbt --run --select test_lf_tags`
+

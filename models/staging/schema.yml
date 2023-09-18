@@ -32,7 +32,9 @@ models:
 
 sources:
   - name: data_source
-    schema: dbt_output_new
+    #schema: jaffle_shop_schema
+    #database: jaffle_shop_schema
+    schema: jaffle_shop_schema
     tables:
       - name: raw_customers
       - name: raw_orders

@@ -3,10 +3,10 @@ name: 'jaffle_shop'
 config-version: 2
 version: '0.1'
 
-profile: 'jaffle_shop'
+profile: 'jaffle_shop_hudi'
 
 model-paths: ["models"]
-seed-paths: ["data"] #["incremental_data_demo"]
+seed-paths: ["data"]
 test-paths: ["tests"]
 analysis-paths: ["analysis"]
 macro-paths: ["macros"]
@@ -21,13 +21,7 @@ seeds:
     enabled: True
     drop_existing: True
     tags_database: 
-      group: 'developer'
+      sensitive: 'no'
     tags_table: 
-      group: 'analyst'     
-models:
-  +lf_tags_config:
-    enabled: True
-    drop_existing: True
-    tags_table: 
-      test: testv
+      sensitive: 'no'     
 require-dbt-version: [">=1.0.0", "<2.0.0"]

@@ -1,6 +1,6 @@
 {{ config(
     materialized='incremental',
-    incremental_strategy='append',
+    incremental_strategy='insert_overwrite',
     unique_key=["customer_id"],
     file_format='iceberg',
     partition_by=['dt'], 

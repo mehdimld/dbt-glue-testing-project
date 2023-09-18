@@ -1,10 +1,26 @@
 {{ config(
-    materialized='view',
+    materialized='table',
     lf_tags_config={
           'enabled': true,
-          'tags': {
-            'group': 'developer'          }
-          }
+          'drop_existing' : True,
+          'tags_database': {
+            'sensitive' : 'no'
+          },
+          'tags_table': {
+            'sensitive': 'no'         }, 
+          'tags_columns': {
+            'sensitive': {
+              'yes': ['customer_id', 'customer_lifetime_value', 'dt']}}}, 
+    lf_grants={
+        'data_cell_filters': {
+            'enabled': True,
+            'drop_existing' : True,
+            'filters': {
+                'test_dbt_glue': {
+                    'row_filter': 'customer_lifetime_value>15',
+                    'principals': ['arn:aws:iam::<ANY_PRINCIPAL>'], 
+                    'excluded_column_names': ['first_name']
+                }}}}
 ) }}
 
 with customers as (
@@ -29,7 +45,6 @@ customer_orders as (
 
         select
         customer_id,
-
         min(order_date) as first_order,
         max(order_date) as most_recent_order,
         count(order_id) as number_of_orders
